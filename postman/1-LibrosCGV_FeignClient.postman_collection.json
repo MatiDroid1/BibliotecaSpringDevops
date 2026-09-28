@@ -1,0 +1,449 @@
+{
+  "info": {
+    "_postman_id": "974de515-6ae2-4daf-9505-e6a46b6814ae",
+    "name": "LibrosCGV_FeignClient",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "13642119"
+  },
+  "item": [
+    {
+      "name": "Create /api/v1/libros",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"isbn\": \"9788477204053\",\r\n    \"titulo\": \"El Caballero de la Armadura Oxidada\",\r\n    \"editorial\": \"Ediciones Obelisco\",\r\n    \"anioPublicacion\": 1997,\r\n    \"autor\": \"Robert Fisher\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Read /api/v1/libros",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Read /api/v1/libros/{id}",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Read /api/v1/libros/isbn/{isbn}",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros/isbn/9781537822075",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "isbn",
+            "9781537822075"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update /api/v1/libros/{id}",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"isbn\": \"978-0-13-468599-1\",\r\n    \"titulo\": \"Moby Dick con ISBN nuevo (antes era 9798344055985)\",\r\n    \"editorial\": \"Harper & Brothers Junior\",\r\n    \"anioPublicacion\": 1900,\r\n    \"autor\": \"Jonathan Melville Ford\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete /api/v1/libros/4",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/v1/libros/4",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "4"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 400 Crea nuevo con campos malos",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"isbn\": \"978-ñlsake93ef0'kls0-13-468599-1\",\r\n    \"titulo\": \"(300 caracteres) lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll\",\r\n    \"editorial\": \"\",\r\n    \"anioPublicacion\": 2300,\r\n    \"autor\": \"\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 400 Nuevo con ISBN inválido",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"isbn\": \"978-ñlsake93ef0'kls0-13-468599-1\",\r\n    \"titulo\": \"Moby Dick en el Espacio\",\r\n    \"editorial\": \"Harper & Brothers Junior\",\r\n    \"anioPublicacion\": 1900,\r\n    \"autor\": \"Jnathan Melville Ford\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 409 Nuevo con ISBN repetido",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"isbn\": \"9781644732076\",\r\n    \"titulo\": \"Tratando de crear 'Oliver Twist' pero el ISBN ya existe\",\r\n    \"editorial\": \"Bentley's Miscellany\",\r\n    \"anioPublicacion\": 1838,\r\n    \"autor\": \"Charles Dickens\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 400 Crea con json mal formado",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"isbn\": \"978-ñlsake93ef0'kls0-13-468599-1\"\r\n    \"titulo\": \"Moby Dick en el Espacio\"\r\n    \"editorial\": \"Harper & Brothers Junior\"\r\n    \"anioPublicacion\": 1900\r\n    \"autor\": \"Jnathan Melville Ford\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 404 Endpoint no existe",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libro",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libro"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 404 Busca ID que no existe",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros/9999",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "9999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 404 Busca ISBN que no existe",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros/isbn/9999",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "isbn",
+            "9999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 404 Elimina ID que no existe",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros/999",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Err 409 Actualiza con ISBN repetido",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"isbn\": \"9781537822075\",\r\n    \"titulo\": \"Quiero crear Moby Dick pero con el ISBN de Drácula\",\r\n    \"editorial\": \"Elderwand Editions\",\r\n    \"anioPublicacion\": 2024,\r\n    \"autor\": \"Herman Melville\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:9002/api/v1/libros/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9002",
+          "path": [
+            "api",
+            "v1",
+            "libros",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Crear un recurso físico (ejemplar de 1 libro)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sku\": \"SKU-MOBY-002\",\r\n  \"tipoRecurso\": \"Libro\",\r\n  \"isbn\": \"9798344055985\",\r\n  \"estadoFisico\": \"Excelente\",\r\n  \"disponible\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:9003/api/v1/recursos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9003",
+          "path": [
+            "api",
+            "v1",
+            "recursos"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Buscar todos los recursos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9003/api/v1/recursos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "9003",
+          "path": [
+            "api",
+            "v1",
+            "recursos"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

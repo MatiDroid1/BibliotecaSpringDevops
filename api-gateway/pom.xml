@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- Modelo base de Maven -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+    Hereda del POM padre del proyecto Biblioteca.
+    Esto permite reutilizar las versiones de Spring Boot, Spring Cloud y demás
+    dependencias definidas centralizadamente en el proyecto padre.
+    -->
+    <parent>
+        <groupId>cl.triskeledu</groupId>
+        <artifactId>biblioteca</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <!-- Coordenadas GAV de este módulo -->
+    <groupId>cl.triskeledu</groupId>
+    <artifactId>cl-triskeledu-gateway</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <name>API Gateway</name>
+    <description>
+        API Gateway del proyecto Biblioteca.
+        Punto de entrada único para todos los microservicios.
+        Utiliza Spring Cloud Gateway (reactivo) con integración a Eureka
+        para descubrimiento de servicios y balanceo de carga automático.
+    </description>
+
+    <packaging>jar</packaging>
+
+    <dependencies>
+
+        <!--
+        Spring Cloud Gateway (Reactivo):
+        Proporciona el motor de enrutamiento basado en WebFlux (non-blocking I/O).
+        Utiliza el protocolo lb:// para resolución de servicios vía Eureka
+        y balanceo de carga automático con Spring Cloud LoadBalancer (round-robin).
+        IMPORTANTE: Este starter trae WebFlux. NO debe usarse junto con spring-boot-starter-web
+        ya que son stacks incompatibles (reactivo vs. servlet).
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
+        </dependency>
+
+        <!--
+        Eureka Client:
+        Permite que el API Gateway se registre en Eureka Server como un servicio más,
+        y además le permite descubrir las instancias de los microservicios destino
+        (ms-usuarios, ms-catalogo, ms-recursos) para enrutar las peticiones.
+        Incluye transitivamente spring-cloud-starter-loadbalancer para balanceo de carga.
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <!--
+        Spring Boot Actuator:
+        Expone endpoints de monitoreo (health, info, gateway/routes, etc.)
+        que permiten verificar el estado del gateway y las rutas activas.
+        El endpoint /actuator/gateway/routes es especialmente útil para depuración.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Testing: soporte para pruebas unitarias e integración -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+            Spring Boot Maven Plugin:
+            Genera un JAR ejecutable (fat jar) con todas las dependencias embebidas.
+            El goal 'repackage' crea el archivo cl-triskeledu-gateway-0.0.1-SNAPSHOT.jar
+            que puede ejecutarse directamente con: java -jar cl-triskeledu-gateway-0.0.1-SNAPSHOT.jar
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals><goal>repackage</goal></goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>cl.triskeledu.gateway.BibliotecaGatewayApplication</mainClass>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
+</project>

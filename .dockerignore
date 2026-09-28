@@ -1,0 +1,16 @@
+.git
+.github
+**/target
+**/.idea
+**/.vscode
+**/*.log
+**/*.bak
+*.pem
+*.ppk
+.env
+README.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+LICENSE.md
+postman

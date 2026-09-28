@@ -1,0 +1,161 @@
+# ============================================================
+# MS-USUARIOS - Configuración principal
+# ============================================================
+# Este microservicio gestiona los usuarios del sistema.
+# Se registra en Eureka para que otros MS puedan encontrarlo
+# sin necesidad de conocer su IP o puerto directamente.
+# ============================================================
+
+spring:
+  application:
+    name: ms-usuarios
+  profiles:
+    active: dev                # Entorno por defecto al arrancar en local
+  datasource:                  # ← dentro de spring, como corresponde
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/usuarios
+    username: postgres
+    password: alone15              # ⚠️ Solo válido en local. NUNCA subir credenciales reales a Git.
+
+  jpa:                         # ← dentro de spring, como corresponde
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    # ddl-auto va en cada perfil porque su valor cambia entre dev y prod
+
+# [JJWT-INI]
+# ── Configuración JWT ──────────────────────────────────────────
+# Esta clave secreta DEBE ser idéntica en todos los microservicios
+# para que los tokens generados por ms-usuarios sean válidos en
+# ms-catalogo y ms-recursos.
+# Para dar el valor al "secret" trasformaremos la frase clave (inventada) 
+# "tokenSecretKeyBiblioteca2026TriskeleduSecurity" a formato Base64
+jwt:
+  secret: "dG9rZW5TZWNyZXRLZXlCaWJsaW90ZWNhMjAyNlRyaXNrZWxlZHVTZWN1cml0eQ=="
+  expiration-ms: 3600000   # 1 hora en milisegundos
+# [JJWT-FIN]
+
+server:
+  port: 9001
+  error:
+    include-stacktrace: never  # Nunca exponer el stacktrace en la respuesta HTTP
+
+# [SWAGGER-INI] 
+# Configuración de SpringDoc/Swagger UI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+# [SWAGGER-FIN]
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: "${spring.application.name}:${server.port}"
+    # ↑ ID único por instancia: nombre del servicio + puerto fijo local
+    lease-renewal-interval-in-seconds: 15
+    # ↑ Cada 15s este MS le dice a Eureka "sigo vivo" (heartbeat)
+    lease-expiration-duration-in-seconds: 60
+    # ↑ Si Eureka no recibe heartbeat en 60s, da el MS por caído
+
+management:
+  info:
+      env:
+        enabled: true
+  # ⚠️ REGLA IMPORTANTE:
+  #   "endpoints" (plural)  → para exponer/ocultar endpoints en la web
+  #   "endpoint"  (singular) → para configurar el comportamiento de uno concreto
+  #   Si repites la misma clave dos veces en YAML, la segunda pisa a la primera.
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info   # Base conservadora; dev lo amplía abajo
+  endpoint:
+    health:
+      show-details: always
+      # ↑ Muestra qué componente interno falló (BD, disco, eureka…)
+      probes:
+        enabled: true
+        # ↑ Activa /actuator/health/liveness y /health/readiness
+        #   (necesario si en el futuro despliegas en Kubernetes)
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: "@project.version@"   # Las @ requieren comillas para que YAML no las malinterprete
+    description: "Microservicio de gestión de los usuarios del sistema"
+
+# ════════════════════════════════════════════════════════════
+# PERFIL: Desarrollo (tu PC local)
+# ════════════════════════════════════════════════════════════
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # Crea/modifica tablas automáticamente → cómodo en local
+    show-sql: true       # Imprime cada SQL en consola → ideal para depurar queries
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,loggers
+        # health  → estado general
+        # info    → versión y descripción
+        # metrics → memoria JVM, tiempos de respuesta, conexiones a BD
+        # env     → qué propiedades están activas (útil para depurar configs)
+        # loggers → cambiar nivel de log EN CALIENTE sin reiniciar
+
+# ════════════════════════════════════════════════════════════
+# PERFIL: Producción (servidor real)
+# ════════════════════════════════════════════════════════════
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${DB_URL}           # ✅ Leído de variable de entorno del servidor
+    username: ${DB_USERNAME} #    Nunca hardcodear credenciales reales aquí
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      # ↑ En prod NO tocamos el esquema automáticamente.
+      #   Solo verifica que las tablas coincidan con las entidades Java.
+      #   Las migraciones reales se hacen con Flyway o Liquibase.
+    show-sql: false          # Nunca imprimir SQL en prod (ruido + info sensible)
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka}
+      # ↑ Lee la URL de una variable de entorno.
+      #   El valor tras ":" es el fallback si la variable no existe.
+  instance:
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+    # ↑ Más tolerante en prod para aguantar picos de red sin falsos positivos
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+      # ↑ En prod solo usuarios autenticados ven el detalle interno
+  endpoints:
+    web:
+      exposure:
+        include: health,info   # Mínimo necesario en prod

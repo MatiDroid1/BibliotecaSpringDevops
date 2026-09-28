@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- Modelo base de Maven -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        *******************************************
+        CGV INICIO: PERSONALIZAR PARA CADA PROYECTO
+        *******************************************
+    -->
+
+    <!-- Herencia del proyecto padre que centraliza configuracion, BOM y versiones -->
+    <parent>
+        <groupId>cl.triskeledu</groupId>
+        <artifactId>biblioteca</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <!-- Coordenadas GAV (GroupId, ArtifactId, Version) de este modulo -->
+    <groupId>cl.triskeledu</groupId>
+    <artifactId>cl-triskeledu-eureka</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <!-- Nombre y descripcion del modulo Eureka Server -->
+    <name>Biblioteca - Eureka Module</name>
+    <description>Netflix Eureka: Dynamic microservice discovery, registration, and lookup.</description>
+
+    <!--
+        *******************************************
+        CGV FIN: PERSONALIZAR PARA CADA PROYECTO
+        *******************************************
+    -->
+
+    <!-- Forma de empaquetado es .jar -->
+    <packaging>jar</packaging>
+
+    <!-- Dependencias necesarias para este microservicio -->
+    <dependencies>
+
+        <!-- Eureka server -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+        </dependency>
+
+        <!-- Actuator for health checks -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Testing con JUnit, MockMvc, etc. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <!-- Empaquetado ejecutable con Spring Boot -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>cl.triskeledu.eureka.BibliotecaEurekaApplication</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

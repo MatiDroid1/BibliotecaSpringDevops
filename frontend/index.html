@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Biblioteca Digital - Proyecto académico para laboratorio DevOps">
+    <title>Biblioteca Nova | Biblioteca Digital</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <a class="brand" href="#inicio" aria-label="Biblioteca Nova">
+            <span class="brand-mark" aria-hidden="true">B</span>
+            <span>
+                <strong>Biblioteca Nova</strong>
+                <small>Campus Digital</small>
+            </span>
+        </a>
+
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="#inicio">Inicio</a>
+            <a href="#catalogo">Catálogo</a>
+            <a href="#servicios">Servicios</a>
+            <a href="#devops">DevOps</a>
+        </nav>
+
+        <a class="nav-action" href="#catalogo">Explorar catálogo</a>
+    </header>
+
+    <main>
+        <section class="hero" id="inicio">
+            <div class="hero-copy">
+                <span class="eyebrow"><i></i> PROYECTO BIBLIOTECA · DEVOPS LAB</span>
+                <h1>Conocimiento que<br><span>se despliega contigo.</span></h1>
+                <p>
+                    Una biblioteca digital construida para aprender microservicios,
+                    Git, Pull Requests, GitHub Actions y despliegue automático en AWS.
+                </p>
+
+                <div class="hero-actions">
+                    <a class="button button-primary" href="#catalogo">Ver libros</a>
+                    <a class="button button-secondary" href="#devops">Ver flujo DevOps</a>
+                </div>
+
+                <div class="hero-meta">
+                    <div>
+                        <strong id="version-label">v1.0</strong>
+                        <span>Versión desplegada</span>
+                    </div>
+                    <div>
+                        <strong>main</strong>
+                        <span>Rama producción</span>
+                    </div>
+                    <div>
+                        <strong id="backend-state">Comprobando...</strong>
+                        <span>API Gateway</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-visual" aria-hidden="true">
+                <div class="visual-card visual-card-back"></div>
+                <div class="visual-card visual-card-main">
+                    <div class="book-icon">⌁</div>
+                    <span class="visual-label">LECTURA DESTACADA</span>
+                    <h2>DevOps para equipos modernos</h2>
+                    <p>Colaborar · Automatizar · Entregar</p>
+                    <div class="visual-progress"><span></span></div>
+                    <small>Laboratorio práctico</small>
+                </div>
+                <div class="floating-tag tag-one">CI / CD</div>
+                <div class="floating-tag tag-two">AWS EC2</div>
+                <div class="floating-tag tag-three">Spring Boot</div>
+            </div>
+        </section>
+
+        <section class="section" id="catalogo">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">CATÁLOGO RECOMENDADO</span>
+                    <h2>Explora nuevas ideas.</h2>
+                </div>
+                <p>Contenido de ejemplo para que los estudiantes puedan realizar cambios visuales en la rama <code>dev</code>.</p>
+            </div>
+
+            <div class="book-grid">
+                <article class="book-card">
+                    <div class="book-cover cover-java"><span>JAVA</span><b>21</b></div>
+                    <div class="book-info">
+                        <span class="category">DESARROLLO</span>
+                        <h3>Java moderno</h3>
+                        <p>Fundamentos para aplicaciones empresariales.</p>
+                        <div class="availability"><i></i> Disponible</div>
+                    </div>
+                </article>
+
+                <article class="book-card">
+                    <div class="book-cover cover-devops"><span>DEV</span><b>OPS</b></div>
+                    <div class="book-info">
+                        <span class="category">DEVOPS</span>
+                        <h3>Entrega continua</h3>
+                        <p>Automatización desde Git hasta producción.</p>
+                        <div class="availability"><i></i> Disponible</div>
+                    </div>
+                </article>
+
+                <article class="book-card">
+                    <div class="book-cover cover-cloud"><span>AWS</span><b>☁</b></div>
+                    <div class="book-info">
+                        <span class="category">CLOUD</span>
+                        <h3>Fundamentos de AWS</h3>
+                        <p>Infraestructura para aplicaciones modernas.</p>
+                        <div class="availability"><i></i> Disponible</div>
+                    </div>
+                </article>
+
+                <article class="book-card">
+                    <div class="book-cover cover-spring"><span>SPRING</span><b>BOOT</b></div>
+                    <div class="book-info">
+                        <span class="category">BACKEND</span>
+                        <h3>Microservicios</h3>
+                        <p>Servicios desacoplados con Spring Boot.</p>
+                        <div class="availability unavailable"><i></i> Prestado</div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section services" id="servicios">
+            <div class="section-heading compact">
+                <div>
+                    <span class="eyebrow">ARQUITECTURA</span>
+                    <h2>Servicios del proyecto.</h2>
+                </div>
+            </div>
+
+            <div class="service-grid">
+                <article><span>01</span><div class="service-icon">E</div><h3>Eureka</h3><p>Descubrimiento de servicios.</p><small>:8761</small></article>
+                <article><span>02</span><div class="service-icon">U</div><h3>Usuarios</h3><p>Autenticación y usuarios.</p><small>:9001</small></article>
+                <article><span>03</span><div class="service-icon">C</div><h3>Catálogo</h3><p>Gestión de libros.</p><small>:9002</small></article>
+                <article><span>04</span><div class="service-icon">R</div><h3>Recursos</h3><p>Ejemplares físicos.</p><small>:9003</small></article>
+                <article><span>05</span><div class="service-icon">G</div><h3>Gateway</h3><p>Punto de entrada API.</p><small>:9000</small></article>
+            </div>
+        </section>
+
+        <section class="section devops" id="devops">
+            <div class="devops-panel">
+                <div class="devops-copy">
+                    <span class="eyebrow">LABORATORIO CI/CD</span>
+                    <h2>Un cambio visible,<br>un pipeline completo.</h2>
+                    <p>Modifica esta página en <code>dev</code>, publica tus cambios y crea un Pull Request hacia <code>main</code>. El merge gatillará el despliegue automático en AWS.</p>
+                </div>
+
+                <div class="pipeline" aria-label="Flujo de despliegue">
+                    <div class="pipeline-step"><b>1</b><span>dev</span><small>Editar</small></div>
+                    <i>→</i>
+                    <div class="pipeline-step"><b>2</b><span>Pull Request</span><small>Revisar</small></div>
+                    <i>→</i>
+                    <div class="pipeline-step"><b>3</b><span>main</span><small>Merge</small></div>
+                    <i>→</i>
+                    <div class="pipeline-step"><b>4</b><span>Actions</span><small>Automatizar</small></div>
+                    <i>→</i>
+                    <div class="pipeline-step active"><b>5</b><span>AWS</span><small>Desplegar</small></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section exercise">
+            <div class="exercise-card">
+                <div>
+                    <span class="eyebrow">CAMBIO SUGERIDO</span>
+                    <h2>Tu primer despliegue.</h2>
+                    <p>Cambia <strong>v1.0</strong> por <strong>v2.0</strong>, modifica el título o agrega un libro. Después observa cómo el cambio llega a AWS al fusionar el Pull Request.</p>
+                </div>
+                <div class="code-example">
+                    <span>frontend/index.html</span>
+                    <pre>&lt;strong id="version-label"&gt;v1.0&lt;/strong&gt;</pre>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="brand footer-brand">
+            <span class="brand-mark">B</span>
+            <span><strong>Biblioteca Nova</strong><small>Ingeniería DevOps</small></span>
+        </div>
+        <p>Proyecto académico · Spring Boot · GitHub Actions · AWS Learner Lab</p>
+        <span id="load-time">Cargando...</span>
+    </footer>
+
+    <script src="assets/app.js"></script>
+</body>
+</html>

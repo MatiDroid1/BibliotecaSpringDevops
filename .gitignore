@@ -1,0 +1,22 @@
+# Maven
+**/target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Logs / runtime
+*.log
+*.pid
+logs/
+
+# Secrets and SSH keys
+*.pem
+*.ppk
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db

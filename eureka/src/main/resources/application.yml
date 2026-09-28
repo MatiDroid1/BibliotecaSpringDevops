@@ -1,0 +1,117 @@
+# ============================================================
+# EUREKA SERVER - Configuración principal
+# ============================================================
+# Eureka es el "directorio telefónico" de tus microservicios.
+# Cada microservicio se registra aquí, y los demás lo buscan
+# aquí para saber a qué IP/puerto llamar.
+# ============================================================
+
+# ── Configuración Base (aplica a TODOS los entornos) ────────
+spring:
+  application:
+    name: eureka-server       # Nombre con el que este servidor se identifica
+  profiles:
+    active: dev               # Entorno por defecto al arrancar en local
+
+server:
+  port: 8761                  # Puerto estándar de Eureka (convención del ecosistema Spring)
+
+eureka:
+  client:
+    register-with-eureka: false # Este ES el servidor → no necesita registrarse en sí mismo
+    fetch-registry: false       # Modo standalone: no busca otros nodos Eureka en la red
+  server:
+    enable-self-preservation: false # Valor base; cada perfil lo sobreescribe abajo
+
+# ── Actuator: monitoreo y salud del servidor Eureka ─────────
+# Actuator expone endpoints HTTP para saber si el servidor está
+# vivo, qué métricas tiene, etc. Eureka mismo usa /health
+# internamente para marcar servicios como UP o DOWN.
+management:
+  endpoints:
+    web:
+      base-path: /actuator    # Todos los endpoints viven bajo /actuator/*
+      exposure:
+        include: health,info  # En producción solo exponemos lo imprescindible
+  endpoint:
+    health:
+      show-details: always    # Muestra qué componente interno falló si hay problemas
+      show-components: always # Desglosa cada "pieza" del health (disco, eureka, ping…)
+      probes:
+        enabled: true         # Activa /actuator/health/liveness y /health/readiness
+                              # (útil si en el futuro despliegas en Kubernetes)
+
+# Datos que aparecen en /actuator/info → útil para saber qué
+# versión exacta está corriendo en cada entorno sin entrar al servidor
+info:
+  app:
+    name: ${spring.application.name}  # Reutiliza el nombre definido arriba
+    version: "@project.version@"        # Spring Boot lo lee automáticamente de tu pom.xml
+    description: "Servidor de descubrimiento de microservicios"
+
+# ── Perfil: Desarrollo (tu PC local) ────────────────────────
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+eureka:
+  server:
+    enable-self-preservation: false
+    # ↑ En local los microservicios se detienen/reinician constantemente
+    #   mientras programas. Sin esto, Eureka entraría en "modo pánico"
+    #   creyendo que la red falló y no limpiaría los servicios caídos.
+
+    eviction-interval-timer-in-ms: 2000
+    # ↑ Cada 2 segundos Eureka revisa y elimina servicios que no
+    #   mandaron heartbeat. Así el dashboard se actualiza rápido en local.
+    #   (En prod esto sería demasiado agresivo.)
+
+management:
+  endpoint:
+    health:
+      show-details: always    # En local queremos ver TODO el detalle sin restricciones
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,loggers
+        # health  → estado general del servidor
+        # info    → versión y descripción de la app
+        # metrics → memoria JVM, tiempos de respuesta, contadores
+        # env     → qué propiedades y variables de entorno están activas
+        # loggers → cambiar nivel de log EN CALIENTE sin reiniciar (muy útil en dev)
+
+# ── Perfil: Producción (servidor real) ──────────────────────
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+eureka:
+  server:
+    enable-self-preservation: true
+    # ↑ Si de repente muchos microservicios dejan de enviar heartbeat,
+    #   Eureka asume que ES LA RED la que falló (no los servicios).
+    #   Con esto activado, NO los borra del registro → los clientes
+    #   siguen pudiendo llamarlos si en realidad siguen vivos.
+
+    renewal-percent-threshold: 0.85
+    # ↑ Si menos del 85 % de los microservicios registrados envían
+    #   su heartbeat en el último minuto, Eureka activa la protección
+    #   automáticamente. Ajusta este número según cuántos MS tengas.
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+      # ↑ En producción no queremos exponer internos a cualquiera.
+      #   Solo usuarios autenticados (ej. con Spring Security) verán el detalle.
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+        # En prod exponemos el mínimo necesario.
+        # health → Eureka y el orquestador (K8s, ECS…) lo necesitan para saber si está vivo.
+        # info   → permite saber qué versión está desplegada sin acceder al servidor.

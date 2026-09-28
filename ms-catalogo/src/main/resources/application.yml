@@ -1,0 +1,134 @@
+# ============================================================
+# MS-CATALOGO - Configuración principal (Global)
+# ============================================================
+spring:
+  application:
+    name: ms-catalogo
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/catalogo
+    username: postgres
+    password: alone15
+  jpa:
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+# [JJWT-INI]
+# ── Configuración JWT ──────────────────────────────────────────
+# Esta clave secreta DEBE ser idéntica en todos los microservicios
+# para que los tokens generados por ms-usuarios sean válidos en
+# ms-catalogo y ms-recursos.
+# Para dar el valor al "secret" trasformaremos la frase clave (inventada) 
+# "tokenSecretKeyBiblioteca2026TriskeleduSecurity" a formato Base64
+jwt:
+  secret: "dG9rZW5TZWNyZXRLZXlCaWJsaW90ZWNhMjAyNlRyaXNrZWxlZHVTZWN1cml0eQ=="
+  expiration-ms: 3600000
+# [JJWT-FIN]
+
+server:
+  port: 9002
+  error:
+    include-stacktrace: never
+
+# [SWAGGER-INI] 
+# Configuración de SpringDoc/Swagger UI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+# [SWAGGER-FIN] 
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: "${spring.application.name}:${server.port}"
+    lease-renewal-interval-in-seconds: 15
+    lease-expiration-duration-in-seconds: 60
+
+management:
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: "@project.version@"
+    description: "Microservicio de gestión del catálogo de productos"
+
+# ════════════════════════════════════════════════════════════
+# PERFIL: Desarrollo
+# ════════════════════════════════════════════════════════════
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+clients:
+  ms-recursos:
+    url: http://localhost:9003
+
+# MOVIDO AQUÍ PARA ASEGURAR QUE SE ACTIVE EN DEV
+logging:
+  level:
+    root: INFO
+    cl.triskeledu: DEBUG                   # <--- Esto activa TODO tu código
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,loggers
+
+# ════════════════════════════════════════════════════════════
+# PERFIL: Producción
+# ════════════════════════════════════════════════════════════
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    root: INFO
+    cl.triskeledu: INFO
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka}

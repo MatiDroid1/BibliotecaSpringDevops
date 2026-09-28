@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- Modelo base de Maven -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        *******************************************
+        CGV INICIO: PERSONALIZAR PARA CADA PROYECTO
+        *******************************************
+    -->
+
+    <!-- Herencia del proyecto padre que centraliza configuracion, BOM y versiones -->
+    <parent>
+        <groupId>cl.triskeledu</groupId>
+        <artifactId>biblioteca</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <!-- Coordenadas GAV (GroupId, ArtifactId, Version) de este modulo -->
+    <groupId>cl.triskeledu</groupId>
+    <artifactId>cl-triskeledu-common</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <!-- Nombre y descripcion del modulo -->
+    <name>Modulo Common</name>
+    <description>Libreria compartida con clases comunes a todos los microservicios (excepciones, utilidades, etc.).</description>
+
+    <!--
+        *******************************************
+        CGV FIN: PERSONALIZAR PARA CADA PROYECTO
+        *******************************************
+    -->
+
+    <!-- Empaquetado como JAR de libreria (sin repackage de Spring Boot) -->
+    <packaging>jar</packaging>
+
+    <dependencies>
+
+        <!-- Spring Boot Starter Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- OpenFeign: cliente HTTP declarativo para comunicacion entre microservicios -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <!-- Lombok: reduce boilerplate en clases de dominio compartidas -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- [JJWT-INI] -->
+        <!-- Spring Security: autenticación y autorización -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- JJWT: librería para generar y validar JSON Web Tokens -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- [JJWT-FIN] -->
+
+        <!-- [SWAGGER-INI] -->
+        <!-- Springdoc OpenAPI: generacion automatica de documentacion Swagger UI -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        <!-- [SWAGGER-FIN] -->
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Evita que busque la clase main -->
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+
+

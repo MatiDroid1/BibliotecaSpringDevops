@@ -1,0 +1,973 @@
+{
+  "info": {
+    "_postman_id": "e0481e5e-1abb-4626-ade2-88b72c1de12e",
+    "name": "LibrosCGV_Control3",
+    "description": "Colección de pruebas para la API de Biblioteca.\n\n**Flujo recomendado:**\n1. Ejecutar Login (guarda el token automáticamente)\n2. Probar endpoints de Libros (usan el token guardado)\n3. Ejecutar Logout (invalida el token)\n\n**Usuarios de prueba:**\n- Administrador: ana@administrador.cl / Biblio@2026\n- Bibliotecario: beatriz@bibliotecario.cl / Biblio@2026\n- Cliente: carlos@cliente.cl / Biblio@2026",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "13642119"
+  },
+  "item": [
+    {
+      "name": "🔐 Autenticación",
+      "item": [
+        {
+          "name": "Register - Registrar nuevo usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene datos del usuario', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('nombre');",
+                  "    pm.expect(jsonData).to.have.property('apellido');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('rol');",
+                  "    pm.expect(jsonData.rol).to.eql('Cliente');",
+                  "    pm.expect(jsonData).to.have.property('activo');",
+                  "    pm.expect(jsonData.activo).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test('El rol asignado es Cliente', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.rol).to.eql('Cliente');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Test\",\n    \"apellido\": \"Usuario\",\n    \"email\": \"test@postman.cl\",\n    \"password\": \"Test@2026\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_usuarios}}/api/v1/auth/register",
+              "host": [
+                "{{base_url_usuarios}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registra un nuevo usuario con rol Cliente.\n\nNo requiere autenticación.\n\nValidaciones:\n- nombre: obligatorio, máx 150 caracteres\n- apellido: obligatorio, máx 150 caracteres\n- email: obligatorio, formato email válido\n- password: obligatorio, entre 6 y 50 caracteres"
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Iniciar sesión (Administrador)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene token JWT', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "    pm.expect(jsonData.token).to.be.a('string');",
+                  "    pm.expect(jsonData.token.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene datos del usuario', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('nombre');",
+                  "    pm.expect(jsonData).to.have.property('rol');",
+                  "    pm.expect(jsonData).to.have.property('expiresIn');",
+                  "});",
+                  "",
+                  "pm.test('Token type es Bearer', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('tokenType');",
+                  "    pm.expect(jsonData.tokenType).to.eql('Bearer');",
+                  "});",
+                  "",
+                  "// Guardar token automáticamente para las siguientes peticiones",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "    console.log('Token JWT guardado exitosamente');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"ana@administrador.cl\",\n    \"password\": \"Biblio@2026\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_usuarios}}/api/v1/auth/login",
+              "host": [
+                "{{base_url_usuarios}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión con credenciales de Administrador.\n\nEl token JWT se guarda automáticamente en la variable `jwt_token` para uso en las siguientes peticiones.\n\nCredenciales: ana@administrador.cl / Biblio@2026"
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Iniciar sesión (Bibliotecario)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene token JWT', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "});",
+                  "",
+                  "pm.test('Rol es Bibliotecario', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.rol).to.eql('Bibliotecario');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"beatriz@bibliotecario.cl\",\n    \"password\": \"Biblio@2026\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_usuarios}}/api/v1/auth/login",
+              "host": [
+                "{{base_url_usuarios}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión con credenciales de Bibliotecario.\n\nEl token JWT se guarda automáticamente.\n\nCredenciales: beatriz@bibliotecario.cl / Biblio@2026"
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Iniciar sesión (Cliente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene token JWT', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('token');",
+                  "});",
+                  "",
+                  "pm.test('Rol es Cliente', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.rol).to.eql('Cliente');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"carlos@cliente.cl\",\n    \"password\": \"Biblio@2026\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_usuarios}}/api/v1/auth/login",
+              "host": [
+                "{{base_url_usuarios}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión con credenciales de Cliente.\n\nEl token JWT se guarda automáticamente.\n\nCredenciales: carlos@cliente.cl / Biblio@2026"
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Credenciales inválidas (400/401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code indica error (no es 200)', function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('No retorna token', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.token).to.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"noexiste@test.cl\",\n    \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_usuarios}}/api/v1/auth/login",
+              "host": [
+                "{{base_url_usuarios}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Prueba de login con credenciales inválidas.\nDebe retornar error (500 con RuntimeException o 401 si hay manejo de excepción)."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout - Cerrar sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene mensaje de confirmación', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.include('Sesión cerrada');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "description": "Token JWT obtenido del login"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_usuarios}}/api/v1/auth/logout",
+              "host": [
+                "{{base_url_usuarios}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Cierra la sesión invalidando el token JWT actual.\n\nEl token se agrega a una blacklist en memoria del servidor.\nDespués de este paso, el token ya no será aceptado por ningún endpoint protegido.\n\n**Prerequisito:** Haber ejecutado un Login primero para tener un token válido."
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar token invalidado (401 post-logout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 401 o 403 (token invalidado)', function () {",
+                  "    pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "description": "Token JWT que ya fue invalidado con logout"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros"
+              ]
+            },
+            "description": "Verificar que después del logout, el token invalidado es rechazado.\n\n**Ejecutar después del Logout.** Debe retornar 401 Unauthorized."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de autenticación: login, registro y logout."
+    },
+    {
+      "name": "📚 Libros (CRUD)",
+      "item": [
+        {
+          "name": "Listar todos los libros",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta es un array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Cada libro tiene los campos esperados', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        var libro = jsonData[0];",
+                  "        pm.expect(libro).to.have.property('id');",
+                  "        pm.expect(libro).to.have.property('isbn');",
+                  "        pm.expect(libro).to.have.property('titulo');",
+                  "        pm.expect(libro).to.have.property('editorial');",
+                  "        pm.expect(libro).to.have.property('anioPublicacion');",
+                  "        pm.expect(libro).to.have.property('autor');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros"
+              ]
+            },
+            "description": "Lista todos los libros del catálogo.\n\nRoles permitidos: Administrador, Bibliotecario, Cliente"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener libro por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene datos del libro', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('isbn');",
+                  "    pm.expect(jsonData).to.have.property('titulo');",
+                  "    pm.expect(jsonData).to.have.property('editorial');",
+                  "    pm.expect(jsonData).to.have.property('anioPublicacion');",
+                  "    pm.expect(jsonData).to.have.property('autor');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros/{{libro_id}}",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros",
+                "{{libro_id}}"
+              ]
+            },
+            "description": "Obtiene un libro específico por su ID.\n\nRoles permitidos: Administrador, Bibliotecario, Cliente\n\nVariable: {{libro_id}} = ID del libro a buscar"
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar libro por ISBN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene datos del libro', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('isbn');",
+                  "    pm.expect(jsonData).to.have.property('titulo');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros/isbn/9788477206019",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros",
+                "isbn",
+                "9788477206019"
+              ]
+            },
+            "description": "Busca un libro por su código ISBN-13.\n\nRoles permitidos: Administrador, Bibliotecario, Cliente"
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar existencia por ISBN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta es un booleano', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.a('boolean');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros/existe/isbn/9798344055985\n",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros",
+                "existe",
+                "isbn",
+                "9798344055985\n"
+              ]
+            },
+            "description": "Verifica si existe un libro con el ISBN especificado.\n\nRetorna un booleano (true/false).\n\nRoles permitidos: Administrador, Bibliotecario, Cliente"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear nuevo libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Respuesta contiene el libro creado', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('isbn');",
+                  "    pm.expect(jsonData).to.have.property('titulo');",
+                  "    pm.expect(jsonData.titulo).to.eql('Effective Java');",
+                  "});",
+                  "",
+                  "// Guardar ID del libro creado para update y delete",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('libro_id', jsonData.id);",
+                  "    console.log('libro_id guardado: ' + jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"isbn\": \"9780134685991\",\n    \"titulo\": \"Effective Java\",\n    \"editorial\": \"Addison-Wesley\",\n    \"anioPublicacion\": 2018,\n    \"autor\": \"Joshua Bloch\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros"
+              ]
+            },
+            "description": "Crea un nuevo libro en el catálogo.\n\nRoles permitidos: Administrador, Bibliotecario\n(Cliente recibirá 403 Forbidden)\n\nValidaciones del ISBN-13: debe tener formato válido (ej: 9780134685991)"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Libro actualizado correctamente', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('titulo');",
+                  "    pm.expect(jsonData.titulo).to.include('3rd Edition');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"isbn\": \"9780134685991\",\n    \"titulo\": \"Effective Java - 3rd Edition\",\n    \"editorial\": \"Addison-Wesley Professional\",\n    \"anioPublicacion\": 2018,\n    \"autor\": \"Joshua Bloch\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros/{{libro_id}}",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros",
+                "{{libro_id}}"
+              ]
+            },
+            "description": "Actualiza un libro existente por su ID.\n\nRoles permitidos: Administrador, Bibliotecario\n\nVariable: {{libro_id}} = ID del libro a actualizar"
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros/{{libro_id}}",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros",
+                "{{libro_id}}"
+              ]
+            },
+            "description": "Elimina un libro por su ID.\n\nRoles permitidos: Administrador, Bibliotecario\n(Cliente recibirá 403 Forbidden)\n\nVariable: {{libro_id}} = ID del libro a eliminar\n\nNota: No se puede eliminar si tiene categorías asociadas o recursos físicos."
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar categoría a libro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros/libro/{{libro_id}}/categoria/1",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros",
+                "libro",
+                "{{libro_id}}",
+                "categoria",
+                "1"
+              ]
+            },
+            "description": "Asocia una categoría existente a un libro.\n\nRoles permitidos: Administrador, Bibliotecario\n\nVariables:\n- {{libro_id}} = ID del libro\n- categoria_id = 1 (ajustar según categorías existentes)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints CRUD de libros del catálogo (ms-catalogo).\n\n**Prerequisito:** Ejecutar primero un Login para obtener el token JWT.\n\nPermisos:\n- GET: Administrador, Bibliotecario, Cliente\n- POST/PUT/DELETE: Administrador, Bibliotecario"
+    },
+    {
+      "name": "🚫 Pruebas de Autorización",
+      "item": [
+        {
+          "name": "Acceso sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros"
+              ]
+            },
+            "description": "Intenta acceder a un endpoint protegido sin enviar token JWT.\n\nDebe retornar 401 Unauthorized."
+          },
+          "response": []
+        },
+        {
+          "name": "Cliente intenta DELETE libro (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "description": "Usar token de Cliente (carlos@cliente.cl)"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros/1",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros",
+                "1"
+              ]
+            },
+            "description": "Intenta eliminar un libro usando un token de Cliente.\n\n**Prerequisito:** Login con carlos@cliente.cl (rol Cliente)\n\nDebe retornar 403 Forbidden, ya que solo Administrador y Bibliotecario pueden eliminar."
+          },
+          "response": []
+        },
+        {
+          "name": "Cliente intenta POST libro (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code es 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "description": "Usar token de Cliente (carlos@cliente.cl)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"isbn\": \"9780596009205\",\n    \"titulo\": \"Head First Design Patterns\",\n    \"editorial\": \"O'Reilly Media\",\n    \"anioPublicacion\": 2004,\n    \"autor\": \"Eric Freeman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url_catalogo}}/api/v1/libros",
+              "host": [
+                "{{base_url_catalogo}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "libros"
+              ]
+            },
+            "description": "Intenta crear un libro usando un token de Cliente.\n\n**Prerequisito:** Login con carlos@cliente.cl (rol Cliente)\n\nDebe retornar 403 Forbidden."
+          },
+          "response": []
+        }
+      ],
+      "description": "Pruebas que validan que la seguridad funciona correctamente:\n- Acceso sin token (401)\n- Acceso con rol insuficiente (403)"
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url_usuarios",
+      "value": "http://localhost:9000"
+    },
+    {
+      "key": "base_url_catalogo",
+      "value": "http://localhost:9000"
+    },
+    {
+      "key": "jwt_token",
+      "secret": true
+    },
+    {
+      "key": "libro_id",
+      "value": "1"
+    }
+  ]
+}

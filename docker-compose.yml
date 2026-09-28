@@ -1,0 +1,301 @@
+# ============================================================
+# DOCKER COMPOSE - PROYECTO BIBLIOTECA
+# ============================================================
+# Orquesta:
+#   1. PostgreSQL
+#   2. Eureka
+#   3. ms-usuarios
+#   4. ms-catalogo
+#   5. ms-recursos
+#   6. API Gateway
+#   7. Frontend Nginx
+#
+# Comandos principales:
+#   docker compose up -d --build
+#   docker compose ps
+#   docker compose logs -f
+#   docker compose down
+#   docker compose down -v   # elimina también el volumen de BD
+# ============================================================
+
+name: biblioteca
+
+services:
+
+  # ----------------------------------------------------------
+  # BASE DE DATOS
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: biblioteca-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-alone15}
+      POSTGRES_DB: postgres
+
+    # No publicamos 5432 hacia Internet. Los microservicios llegan
+    # a PostgreSQL usando el nombre del servicio: postgres:5432.
+    volumes:
+      - biblioteca-data:/var/lib/postgresql/data
+      - ./init-multi-db:/sql:ro
+      - ./deploy/postgres-init.sh:/docker-entrypoint-initdb.d/00-biblioteca-init.sh:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    mem_limit: 320m
+    cpus: 0.50
+
+    networks:
+      - biblioteca-net
+
+
+  # ----------------------------------------------------------
+  # EUREKA - DESCUBRIMIENTO DE SERVICIOS
+  # ----------------------------------------------------------
+  eureka:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: eureka
+
+    image: biblioteca-eureka:latest
+    container_name: biblioteca-eureka
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+    # Puerto opcional para observar el dashboard de Eureka en clase.
+    ports:
+      - "8761:8761"
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+    mem_limit: 256m
+    cpus: 0.50
+
+    networks:
+      - biblioteca-net
+
+
+  # ----------------------------------------------------------
+  # MICROSERVICIO USUARIOS
+  # ----------------------------------------------------------
+  ms-usuarios:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: ms-usuarios
+
+    image: biblioteca-ms-usuarios:latest
+    container_name: biblioteca-ms-usuarios
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/usuarios
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-alone15}
+      EUREKA_URL: http://eureka:8761/eureka
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9001/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+    mem_limit: 288m
+    cpus: 0.50
+
+    networks:
+      - biblioteca-net
+
+
+  # ----------------------------------------------------------
+  # MICROSERVICIO CATÁLOGO
+  # ----------------------------------------------------------
+  ms-catalogo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: ms-catalogo
+
+    image: biblioteca-ms-catalogo:latest
+    container_name: biblioteca-ms-catalogo
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/catalogo
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-alone15}
+      EUREKA_URL: http://eureka:8761/eureka
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9002/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+    mem_limit: 288m
+    cpus: 0.50
+
+    networks:
+      - biblioteca-net
+
+
+  # ----------------------------------------------------------
+  # MICROSERVICIO RECURSOS
+  # ----------------------------------------------------------
+  ms-recursos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: ms-recursos
+
+    image: biblioteca-ms-recursos:latest
+    container_name: biblioteca-ms-recursos
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/recursos
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-alone15}
+      EUREKA_URL: http://eureka:8761/eureka
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9003/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+    mem_limit: 288m
+    cpus: 0.50
+
+    networks:
+      - biblioteca-net
+
+
+  # ----------------------------------------------------------
+  # API GATEWAY
+  # ----------------------------------------------------------
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: api-gateway
+
+    image: biblioteca-api-gateway:latest
+    container_name: biblioteca-api-gateway
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      EUREKA_URL: http://eureka:8761/eureka
+
+    depends_on:
+      eureka:
+        condition: service_healthy
+      ms-usuarios:
+        condition: service_healthy
+      ms-catalogo:
+        condition: service_healthy
+      ms-recursos:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+    mem_limit: 256m
+    cpus: 0.50
+
+    networks:
+      - biblioteca-net
+
+
+  # ----------------------------------------------------------
+  # FRONTEND
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+
+    image: biblioteca-frontend:latest
+    container_name: biblioteca-frontend
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+
+    mem_limit: 64m
+    cpus: 0.25
+
+    networks:
+      - biblioteca-net
+
+
+# ============================================================
+# VOLUMEN
+# ============================================================
+# Los contenedores se pueden destruir y volver a crear sin perder
+# la información de PostgreSQL.
+volumes:
+  biblioteca-data:
+
+
+# ============================================================
+# RED
+# ============================================================
+# Docker Compose proporciona DNS interno. Por eso los servicios
+# usan nombres como postgres, eureka y api-gateway en vez de IP.
+networks:
+  biblioteca-net:
+    driver: bridge

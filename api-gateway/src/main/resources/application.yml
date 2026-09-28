@@ -1,0 +1,265 @@
+# ============================================================
+# API GATEWAY - Configuración principal (Global)
+# ============================================================
+# Este archivo configura el API Gateway como punto de entrada único
+# para todos los microservicios del proyecto Biblioteca.
+# Puerto: 9000
+# Todas las peticiones llegan aquí y son enrutadas al microservicio
+# correspondiente según el path de la URL.
+# ============================================================
+
+spring:
+  application:
+    name: api-gateway  # Nombre con el que se registra en Eureka Server
+  profiles:
+    active: dev
+
+  # ============================================================
+  # Configuración de rutas del Gateway
+  # ============================================================
+  # Cada ruta define:
+  # - id: identificador único de la ruta (para logs y depuración)
+  # - uri: destino usando protocolo lb:// (load balanced) que resuelve
+  #         el nombre del servicio en Eureka y balancea entre instancias
+  # - predicates: condiciones para que la ruta coincida (basadas en el path)
+  #
+  # BALANCEO DE CARGA:
+  # El prefijo "lb://" activa Spring Cloud LoadBalancer, que usa Eureka
+  # para descubrir todas las instancias registradas de un servicio y
+  # distribuye las peticiones entre ellas usando round-robin.
+  # Ejemplo: si ms-catalogo tiene 2 instancias (puertos 9002 y 9012),
+  # el gateway alternará las peticiones entre ambas automáticamente.
+  #
+  # TRANSPARENCIA:
+  # Los paths NO se modifican al enrutar. Una petición a
+  # localhost:9000/api/v1/libros llega al microservicio como /api/v1/libros.
+  # ============================================================
+  cloud:
+    gateway:
+      routes:
+
+        # ----------------------------------------------------------
+        # RUTA 1: Autenticación (ms-usuarios)
+        # ----------------------------------------------------------
+        # Endpoints públicos de login, registro y logout.
+        # Ejemplo: POST http://localhost:9000/api/v1/auth/login
+        # Se enruta a: ms-usuarios (puerto 9001 por defecto)
+        - id: ms-usuarios-auth
+          uri: lb://ms-usuarios
+          predicates:
+            - Path=/api/v1/auth/**
+
+        # ----------------------------------------------------------
+        # RUTA 2: Gestión de usuarios (ms-usuarios)
+        # ----------------------------------------------------------
+        # CRUD de usuarios. Requiere autenticación JWT.
+        # Ejemplo: GET http://localhost:9000/api/v1/usuarios
+        # Se enruta a: ms-usuarios (puerto 9001 por defecto)
+        - id: ms-usuarios
+          uri: lb://ms-usuarios
+          predicates:
+            - Path=/api/v1/usuarios/**
+
+        # ----------------------------------------------------------
+        # RUTA 3: Catálogo de libros (ms-catalogo)
+        # ----------------------------------------------------------
+        # CRUD de libros del catálogo. Requiere autenticación JWT.
+        # Ejemplo: GET http://localhost:9000/api/v1/libros
+        # Se enruta a: ms-catalogo (puerto 9002 por defecto)
+        - id: ms-catalogo
+          uri: lb://ms-catalogo
+          predicates:
+            - Path=/api/v1/libros/**
+
+        # ----------------------------------------------------------
+        # RUTA 4: Recursos físicos (ms-recursos)
+        # ----------------------------------------------------------
+        # CRUD de recursos físicos (copias de libros, DVDs, etc.)
+        # Requiere autenticación JWT.
+        # Ejemplo: GET http://localhost:9000/api/v1/recursos
+        # Se enruta a: ms-recursos (puerto 9003 por defecto)
+        - id: ms-recursos
+          uri: lb://ms-recursos
+          predicates:
+            - Path=/api/v1/recursos/**
+
+        # ----------------------------------------------------------
+        # RUTA 5: Proyecciones de libros (ms-recursos)
+        # ----------------------------------------------------------
+        # Vista de proyección de libros desde el servicio de recursos.
+        # Requiere autenticación JWT.
+        # Ejemplo: GET http://localhost:9000/api/v1/libros-proyeccion
+        # Se enruta a: ms-recursos (puerto 9003 por defecto)
+        - id: ms-recursos-proyeccion
+          uri: lb://ms-recursos
+          predicates:
+            - Path=/api/v1/libros-proyeccion/**
+
+      # ============================================================
+      # Configuración global de filtros por defecto
+      # ============================================================
+      default-filters:
+        # DedupeResponseHeader: elimina headers duplicados que pueden
+        # aparecer cuando tanto el gateway como el microservicio agregan
+        # los mismos headers de CORS o seguridad.
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+
+      # ============================================================
+      # Configuración CORS global
+      # ============================================================
+      # Permite que aplicaciones frontend (React, Angular, etc.) en
+      # otros dominios/puertos puedan consumir la API a través del gateway.
+      # Se configura aquí de forma centralizada en lugar de en cada microservicio.
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - "http://localhost:3000"     # Frontend React/Next.js (desarrollo)
+              - "http://localhost:4200"     # Frontend Angular (desarrollo)
+              - "http://localhost:5173"     # Frontend Vite (desarrollo)
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+            max-age: 3600  # Cache de preflight CORS por 1 hora (en segundos)
+
+# ============================================================
+# Configuración del servidor
+# ============================================================
+server:
+  port: 9000  # Puerto del API Gateway (punto de entrada único)
+  error:
+    include-stacktrace: never  # No exponer stack traces en respuestas de error
+
+# ============================================================
+# Configuración de Eureka Client
+# ============================================================
+# El gateway se registra en Eureka para:
+# 1. Ser visible en el dashboard de Eureka (http://localhost:8761)
+# 2. Descubrir dinámicamente las instancias de los microservicios destino
+# 3. Habilitar el balanceo de carga con lb:// en las rutas
+eureka:
+  client:
+    register-with-eureka: true     # El gateway se registra como servicio
+    fetch-registry: true           # Descarga el registro de servicios disponibles
+    service-url:
+      defaultZone: http://localhost:8761/eureka  # URL del servidor Eureka
+  instance:
+    prefer-ip-address: true        # Usa IP en lugar de hostname para comunicación
+    hostname: localhost
+    instance-id: "${spring.application.name}:${server.port}"
+    lease-renewal-interval-in-seconds: 15   # Cada 15s envía heartbeat a Eureka
+    lease-expiration-duration-in-seconds: 60 # Eureka elimina la instancia si no recibe heartbeat en 60s
+
+# ============================================================
+# Configuración de Actuator
+# ============================================================
+# Actuator expone endpoints de monitoreo y administración.
+# El endpoint /actuator/gateway/routes es especialmente útil para
+# verificar que todas las rutas del gateway están correctamente configuradas.
+management:
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+    gateway:
+      access: unrestricted  # Habilita el endpoint /actuator/gateway/routes
+
+# ============================================================
+# Información de la aplicación (visible en /actuator/info)
+# ============================================================
+info:
+  app:
+    name: ${spring.application.name}
+    version: "@project.version@"
+    description: "API Gateway - Punto de entrada único para los microservicios de Biblioteca"
+
+# ============================================================
+# Configuración de logging
+# ============================================================
+logging:
+  level:
+    root: INFO
+    cl.triskeledu.gateway: INFO
+    org.springframework.cloud.gateway: INFO
+
+# ============================================================
+# PERFIL: Desarrollo (dev)
+# ============================================================
+# Configuración optimizada para desarrollo local:
+# - Logging más detallado para depuración del gateway
+# - Más endpoints de Actuator expuestos
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+logging:
+  level:
+    root: INFO
+    cl.triskeledu.gateway: DEBUG
+    # Descomentar las siguientes líneas para depuración detallada del gateway:
+    # org.springframework.cloud.gateway: DEBUG
+    # reactor.netty.http.client: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics,env,loggers
+  endpoint:
+    health:
+      show-details: always
+
+# ============================================================
+# PERFIL: Producción (prod)
+# ============================================================
+# Configuración restrictiva para producción:
+# - Logging mínimo (solo WARN/ERROR)
+# - Endpoints de Actuator restringidos (solo health e info)
+# - URL de Eureka configurable via variable de entorno
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+logging:
+  level:
+    root: INFO
+    cl.triskeledu.gateway: INFO
+    org.springframework.cloud.gateway: WARN
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka}
+  instance:
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+  endpoints:
+    web:
+      exposure:
+        include: health,info
