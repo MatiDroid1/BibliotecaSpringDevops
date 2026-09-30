@@ -26,7 +26,7 @@ CREATE TABLE usuarios_proyeccion (
 
 -- TABLAS DEL MICROSERVICIO
 CREATE TABLE recursos_fisicos (
-    id                 SERIAL       PRIMARY KEY,
+    id                 BIGSERIAL    PRIMARY KEY,
     sku                VARCHAR(50)  UNIQUE NOT NULL,
     tipo_recurso       VARCHAR(50)  NOT NULL CHECK (tipo_recurso IN ('Libro','Notebook','Tablet','Juego de mesa')),
     isbn               VARCHAR(20)  REFERENCES libros_proyeccion(isbn),
@@ -36,16 +36,16 @@ CREATE TABLE recursos_fisicos (
 );
 
 CREATE TABLE historial_eventos_recursos_fisicos (
-    id                 SERIAL       PRIMARY KEY,
+    id                 BIGSERIAL    PRIMARY KEY,
     usuario_email      VARCHAR(150) NOT NULL REFERENCES usuarios_proyeccion(email),
-    recurso_id         INT          NOT NULL REFERENCES recursos_fisicos(id),
+    recurso_id         BIGINT       NOT NULL REFERENCES recursos_fisicos(id),
     fecha_evento       DATE         NOT NULL,
     estado             VARCHAR(50)  NOT NULL CHECK (estado IN ('Creado','Reservado','Prestado','Devuelto a tiempo','Devuelto con atraso','Perdido'))
 );
 
 CREATE TABLE mantenimiento_recursos (
-    id                 SERIAL       PRIMARY KEY,
-    recurso_id         INT          NOT NULL REFERENCES recursos_fisicos(id),
+    id                 BIGSERIAL    PRIMARY KEY,
+    recurso_id         BIGINT       NOT NULL REFERENCES recursos_fisicos(id),
     fecha_inicio       DATE         NOT NULL,
     estado             VARCHAR(40)  NOT NULL CHECK (estado IN ('Abierto','Cerrado','Cancelado')),
     observacion        VARCHAR(200)
