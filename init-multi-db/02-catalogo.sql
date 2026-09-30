@@ -11,12 +11,12 @@ DROP TABLE IF EXISTS categorias;
 
 -- 2. TABLAS MAESTRAS
 CREATE TABLE categorias (
-    id                SERIAL       PRIMARY KEY,
+    id                BIGSERIAL    PRIMARY KEY,
     nombre            VARCHAR(100) UNIQUE NOT NULL
 );
 
 CREATE TABLE libros (
-    id                SERIAL       PRIMARY KEY,
+    id                BIGSERIAL    PRIMARY KEY,
     isbn              VARCHAR(20)  UNIQUE NOT NULL,
     titulo            VARCHAR(255) NOT NULL,
     editorial         VARCHAR(100) NOT NULL,
@@ -25,9 +25,9 @@ CREATE TABLE libros (
 );
 
 CREATE TABLE libro_categoria (
-    id                SERIAL       PRIMARY KEY,
-    libro_id          INT          NOT NULL REFERENCES libros(id) ON DELETE CASCADE,
-    categoria_id      INT          NOT NULL REFERENCES categorias(id) ON DELETE RESTRICT,
+    id                BIGSERIAL    PRIMARY KEY,
+    libro_id          BIGINT       NOT NULL REFERENCES libros(id) ON DELETE CASCADE,
+    categoria_id      BIGINT       NOT NULL REFERENCES categorias(id) ON DELETE RESTRICT,
     UNIQUE (libro_id, categoria_id)
 );
 
