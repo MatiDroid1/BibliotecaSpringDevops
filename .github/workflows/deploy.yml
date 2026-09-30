@@ -81,6 +81,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
+    env:
+      # Keepalive compartido por todos los comandos SSH del job.
+      # ServerAliveInterval: manda un ping cada 30s de silencio.
+      # ServerAliveCountMax: tolera hasta 20 pings sin respuesta
+      # (10 minutos) antes de cortar. Evita el "Broken pipe" que
+      # ocurre cuando Docker Compose no imprime nada mientras
+      # espera healthchecks o builds largos.
+      SSH_OPTS: -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o StrictHostKeyChecking=no
+
     steps:
       - name: 1. Descargar código
         uses: actions/checkout@v4
@@ -121,14 +130,14 @@ jobs:
           # el marcador .bootstrap-ready en vez de asumir que ya terminó.
           for i in {1..72}; do
 
-            if ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" \
+            if ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" \
               "test -f /opt/biblioteca/.bootstrap-ready"; then
 
               echo "EC2 preparada correctamente."
               break
             fi
 
-            if ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" \
+            if ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" \
               "test -f /opt/biblioteca/.bootstrap-failed"; then
 
               echo "ERROR: la preparación de EC2 falló."
@@ -145,7 +154,7 @@ jobs:
           done
 
           # Comprobar que Docker y Compose realmente funcionan.
-          ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
+          ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
             set -e
             sudo docker info >/dev/null
             sudo docker compose version
@@ -167,11 +176,12 @@ jobs:
           AWS_HOST: ${{ secrets.AWS_HOST }}
           AWS_USER: ${{ secrets.AWS_USER }}
         run: |
-          scp -i ~/.ssh/biblioteca.pem \
+          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o StrictHostKeyChecking=no \
+            -i ~/.ssh/biblioteca.pem \
             /tmp/biblioteca-compose.tar.gz \
             "$AWS_USER@$AWS_HOST:/tmp/biblioteca-compose.tar.gz"
 
-          ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
+          ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
             set -e
             mkdir -p /opt/biblioteca/current
             rm -rf /opt/biblioteca/current/*
@@ -185,7 +195,7 @@ jobs:
           AWS_HOST: ${{ secrets.AWS_HOST }}
           AWS_USER: ${{ secrets.AWS_USER }}
         run: |
-          ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
+          ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
             set -e
             cd /opt/biblioteca/current
 
@@ -203,7 +213,7 @@ jobs:
           AWS_HOST: ${{ secrets.AWS_HOST }}
           AWS_USER: ${{ secrets.AWS_USER }}
         run: |
-          ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
+          ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
             set -e
             cd /opt/biblioteca/current
 
