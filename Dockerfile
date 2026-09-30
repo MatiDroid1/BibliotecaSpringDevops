@@ -1,10 +1,19 @@
+# syntax=docker/dockerfile:1.4
 # ============================================================
 # DOCKERFILE MULTI-STAGE PARA LOS SERVICIOS JAVA
 # ============================================================
 # Un mismo Dockerfile construye Eureka, los microservicios y
 # el API Gateway. Docker Compose indica qué módulo construir
 # mediante el argumento MODULE.
+#
+# NOTA DE OPTIMIZACIÓN: se agregó --mount=type=cache en los pasos
+# de Maven para compartir el repositorio .m2 entre TODOS los
+# builds (eureka, api-gateway, ms-usuarios, ms-catalogo,
+# ms-recursos), incluso cuando corren en paralelo. Esto evita
+# volver a descargar las mismas dependencias 5 veces y reduce
+# drasticamente el tiempo total de "docker compose build".
 # ============================================================
+
 
 # ------------------------------------------------------------
 # ETAPA 1: DEPENDENCIAS
@@ -26,9 +35,13 @@ COPY ms-recursos/pom.xml ./ms-recursos/pom.xml
 COPY api-gateway/pom.xml ./api-gateway/pom.xml
 
 # Descarga anticipadamente las dependencias del módulo y de sus
-# dependencias internas. Si solo cambia código Java, esta capa
-# normalmente puede reutilizarse.
-RUN mvn -B -pl "${MODULE}" -am dependency:go-offline
+# dependencias internas. El cache mount comparte el repositorio
+# .m2 entre TODOS los módulos y entre corridas del workflow,
+# incluso si los 5 builds corren en paralelo (sharing=locked
+# evita que se corrompan entre sí al escribir al mismo tiempo).
+RUN --mount=type=cache,target=/root/.m2/repository,sharing=locked \
+    mvn -B -pl "${MODULE}" -am dependency:go-offline
+
 
 # ------------------------------------------------------------
 # ETAPA 2: BUILD
@@ -46,8 +59,12 @@ COPY ms-recursos ./ms-recursos
 COPY api-gateway ./api-gateway
 
 # Compila solo el módulo solicitado y lo que necesita.
-RUN mvn -B -pl "${MODULE}" -am clean package -DskipTests \
+# Reutiliza el mismo cache mount para no volver a descargar nada
+# que ya haya bajado la etapa de dependencias.
+RUN --mount=type=cache,target=/root/.m2/repository,sharing=locked \
+    mvn -B -pl "${MODULE}" -am clean package -DskipTests \
     && cp "${MODULE}"/target/*.jar /tmp/app.jar
+
 
 # ------------------------------------------------------------
 # ETAPA 3: RUNTIME
