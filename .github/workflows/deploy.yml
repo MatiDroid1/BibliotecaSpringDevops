@@ -3,25 +3,31 @@
 # ============================================================
 name: Biblioteca Docker Compose CI-CD
 
+
 on:
   # Un Pull Request hacia main valida el proyecto.
   pull_request:
     branches:
       - main
 
+
   # El merge genera un push a main y habilita el despliegue.
   push:
     branches:
       - main
 
+
 permissions:
   contents: read
+
 
 concurrency:
   group: biblioteca-production
   cancel-in-progress: true
 
+
 jobs:
+
 
   # ==========================================================
   # CI - VALIDAR
@@ -30,9 +36,11 @@ jobs:
     name: Validar Maven, Dockerfiles y Compose
     runs-on: ubuntu-latest
 
+
     steps:
       - name: 1. Descargar código
         uses: actions/checkout@v4
+
 
       - name: 2. Configurar Java 21
         uses: actions/setup-java@v4
@@ -41,11 +49,13 @@ jobs:
           java-version: '21'
           cache: maven
 
+
       - name: 3. Compilar proyecto Maven
         # -B: modo no interactivo apropiado para CI.
         # -DskipTests: esta semana se centra en Compose.
         # Los tests y JaCoCo se incorporarán en la siguiente unidad.
         run: mvn -B clean package -DskipTests
+
 
       - name: 4. Validar archivos del laboratorio
         shell: bash
@@ -59,13 +69,16 @@ jobs:
           bash -n deploy/setup-ec2.sh
           bash -n deploy/postgres-init.sh
 
+
       - name: 5. Validar sintaxis de Docker Compose
         run: docker compose config
+
 
       - name: 6. Construir imágenes con Docker Compose
         # Aquí se demuestra que Compose puede construir todos los
         # servicios definidos en el YAML con un solo comando.
         run: docker compose build
+
 
 
   # ==========================================================
@@ -75,15 +88,29 @@ jobs:
     name: Desplegar stack en AWS EC2
     needs: validar
 
+
     # El Pull Request NO despliega.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
 
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
+
+    env:
+      # Keepalive compartido por todos los comandos SSH del job.
+      # ServerAliveInterval: manda un ping cada 30s de silencio.
+      # ServerAliveCountMax: tolera hasta 20 pings sin respuesta
+      # (10 minutos) antes de cortar. Evita el "Broken pipe" que
+      # ocurre cuando Docker Compose no imprime nada mientras
+      # espera healthchecks o builds largos.
+      SSH_OPTS: -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o StrictHostKeyChecking=no
+
+
     steps:
       - name: 1. Descargar código
         uses: actions/checkout@v4
+
 
       - name: 2. Preparar clave SSH
         shell: bash
@@ -95,6 +122,7 @@ jobs:
           printf '%s\n' "$AWS_SSH_KEY" | tr -d '\r' > ~/.ssh/biblioteca.pem
           chmod 600 ~/.ssh/biblioteca.pem
 
+
           # Esperar a que SSH esté disponible.
           for i in {1..30}; do
             if ssh-keyscan -T 5 -H "$AWS_HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
@@ -105,8 +133,10 @@ jobs:
             sleep 10
           done
 
+
           echo "ERROR: EC2 no respondió por SSH."
           exit 1
+
 
       - name: 3. Esperar que la EC2 esté preparada
         shell: bash
@@ -116,40 +146,49 @@ jobs:
         run: |
           set -euo pipefail
 
+
           # Una EC2 puede aparecer como Running mientras User Data
           # todavía instala Docker y Docker Compose. Por eso esperamos
           # el marcador .bootstrap-ready en vez de asumir que ya terminó.
           for i in {1..72}; do
 
-            if ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" \
+
+            if ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" \
               "test -f /opt/biblioteca/.bootstrap-ready"; then
+
 
               echo "EC2 preparada correctamente."
               break
             fi
 
-            if ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" \
+
+            if ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" \
               "test -f /opt/biblioteca/.bootstrap-failed"; then
+
 
               echo "ERROR: la preparación de EC2 falló."
               exit 1
             fi
+
 
             if [ "$i" -eq 72 ]; then
               echo "ERROR: la EC2 no terminó de prepararse dentro de 12 minutos."
               exit 1
             fi
 
+
             echo "Esperando User Data... intento $i/72"
             sleep 10
           done
 
+
           # Comprobar que Docker y Compose realmente funcionan.
-          ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
+          ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
             set -e
             sudo docker info >/dev/null
             sudo docker compose version
           '
+
 
       - name: 4. Crear paquete para EC2
         shell: bash
@@ -161,17 +200,20 @@ jobs:
             --exclude='.env' \
             -czf /tmp/biblioteca-compose.tar.gz .
 
+
       - name: 5. Copiar proyecto a EC2
         shell: bash
         env:
           AWS_HOST: ${{ secrets.AWS_HOST }}
           AWS_USER: ${{ secrets.AWS_USER }}
         run: |
-          scp -i ~/.ssh/biblioteca.pem \
+          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o StrictHostKeyChecking=no \
+            -i ~/.ssh/biblioteca.pem \
             /tmp/biblioteca-compose.tar.gz \
             "$AWS_USER@$AWS_HOST:/tmp/biblioteca-compose.tar.gz"
 
-          ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
+
+          ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
             set -e
             mkdir -p /opt/biblioteca/current
             rm -rf /opt/biblioteca/current/*
@@ -179,23 +221,35 @@ jobs:
             rm -f /tmp/biblioteca-compose.tar.gz
           '
 
+
       - name: 6. Orquestar contenedores con Docker Compose
         shell: bash
         env:
           AWS_HOST: ${{ secrets.AWS_HOST }}
           AWS_USER: ${{ secrets.AWS_USER }}
         run: |
-          ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
+          ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
             set -e
             cd /opt/biblioteca/current
 
-            # Compose reconstruye solo lo necesario y mantiene el
-            # volumen de PostgreSQL entre despliegues.
-            sudo docker compose up -d --build --remove-orphans
+            # Construimos UN servicio Java a la vez para no saturar
+            # la memoria de una instancia pequena (t3.small/t3.micro).
+            # Compilar varios microservicios Maven en paralelo puede
+            # necesitar 3-4 GB de RAM; en secuencia, basta con lo
+            # que use un solo build a la vez.
+            for servicio in eureka api-gateway ms-usuarios ms-catalogo ms-recursos frontend; do
+              echo "=== Construyendo: $servicio ==="
+              sudo docker compose build "$servicio"
+            done
+
+            # Con todo ya construido, levantar el stack completo es
+            # liviano: no hay compilacion, solo arrancar contenedores.
+            sudo docker compose up -d --remove-orphans
 
             echo "Estado del stack:"
             sudo docker compose ps
           '
+
 
       - name: 7. Esperar frontend y verificar despliegue
         shell: bash
@@ -203,9 +257,10 @@ jobs:
           AWS_HOST: ${{ secrets.AWS_HOST }}
           AWS_USER: ${{ secrets.AWS_USER }}
         run: |
-          ssh -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
+          ssh $SSH_OPTS -i ~/.ssh/biblioteca.pem "$AWS_USER@$AWS_HOST" '
             set -e
             cd /opt/biblioteca/current
+
 
             for i in {1..60}; do
               if curl -fsS http://127.0.0.1/ >/dev/null 2>&1; then
@@ -214,9 +269,11 @@ jobs:
                 exit 0
               fi
 
+
               echo "Esperando stack... intento $i/60"
               sleep 5
             done
+
 
             echo "ERROR: el frontend no quedó disponible."
             sudo docker compose ps

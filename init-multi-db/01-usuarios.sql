@@ -11,18 +11,18 @@ DROP TABLE IF EXISTS usuarios;
 
 -- 2. TABLAS MAESTRAS
 CREATE TABLE usuarios (
-    id                SERIAL       PRIMARY KEY,
+    id                BIGSERIAL    PRIMARY KEY,
     nombre            VARCHAR(150) NOT NULL,
     apellido          VARCHAR(150) NOT NULL,
     email             VARCHAR(150) UNIQUE NOT NULL,
     -- [JJWT] Se debe aumentar el tamaño de la password
-    password          VARCHAR(255) NOT NULL, 
+    password          VARCHAR(255) NOT NULL,
     rol               VARCHAR(50)  NOT NULL CHECK (rol IN ('Administrador','Bibliotecario','Cliente')),
     activo            BOOLEAN      DEFAULT TRUE
 );
 
 CREATE TABLE perfil_usuarios (
-    id                SERIAL       PRIMARY KEY,
+    id                BIGSERIAL    PRIMARY KEY,
     usuario_email     VARCHAR(150) UNIQUE NOT NULL REFERENCES usuarios(email) ON DELETE CASCADE,
     telefono          VARCHAR(30),
     direccion         VARCHAR(180),
@@ -30,7 +30,7 @@ CREATE TABLE perfil_usuarios (
 );
 
 CREATE TABLE credenciales_usuarios (
-    id                SERIAL       PRIMARY KEY,
+    id                BIGSERIAL    PRIMARY KEY,
     usuario_email     VARCHAR(150) UNIQUE NOT NULL REFERENCES usuarios(email) ON DELETE CASCADE,
     ultimo_acceso     TIMESTAMP,
     bloqueado         BOOLEAN      NOT NULL DEFAULT FALSE,
@@ -42,8 +42,8 @@ CREATE INDEX idx_usuarios_activo ON usuarios(activo);
 CREATE INDEX idx_perfil_usuario_email ON perfil_usuarios(usuario_email);
 
 -- 3. DATOS DE PRUEBA
--- [JJWT-INI] 
--- La contraseña por defecto fue configurada como 'Biblio@2026' para todos los usuarios, y está almacenada como 
+-- [JJWT-INI]
+-- La contraseña por defecto fue configurada como 'Biblio@2026' para todos los usuarios, y está almacenada como
 -- hash (huella digital) utilizando el algoritmo BCrypt (generado con BCryptPasswordEncoder de Spring Security).
 INSERT INTO usuarios (nombre, apellido, email, password, rol) VALUES
 ('Ana',      'Aguilar',   'ana@administrador.cl',     '$2b$10$1hnbaMR7iTsdn3D0gG5Q8eUw5aSh9O2at2e4u1iAlzdhD6m4dzVZO',  'Administrador'),
@@ -55,7 +55,7 @@ INSERT INTO usuarios (nombre, apellido, email, password, rol) VALUES
 ('Carlos',   'Contreras', 'carlos@cliente.cl',        '$2b$10$1hnbaMR7iTsdn3D0gG5Q8eUw5aSh9O2at2e4u1iAlzdhD6m4dzVZO', 'Cliente'),
 ('Camila',   'Cervantes', 'camila@cliente.cl',        '$2b$10$1hnbaMR7iTsdn3D0gG5Q8eUw5aSh9O2at2e4u1iAlzdhD6m4dzVZO', 'Cliente'),
 ('Cristian', 'Castro',    'cristian@cliente.cl',      '$2b$10$1hnbaMR7iTsdn3D0gG5Q8eUw5aSh9O2at2e4u1iAlzdhD6m4dzVZO', 'Cliente');
--- [JJWT-FIN] 
+-- [JJWT-FIN]
 
 INSERT INTO perfil_usuarios (usuario_email, telefono, direccion) VALUES
 ('ana@administrador.cl',     '+56911111111', 'Sede Central'),
